@@ -15,8 +15,8 @@
 
 #define rcPin 2 // RCSwitch
 
-#define RST_PIN 9   // RFID
-#define SS_PIN 10   // RFID
+#define RST_PIN 8   // RFID
+#define SS_PIN 7   // RFID
 
 // Default IR Led Pin 3 (Uno), Pin 13 (Micro)
 
@@ -31,7 +31,15 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 IRsend irsend;
 
 // RCSwitch Setup
-RCSwitch mySwitch = RCSwitch(); 
+RCSwitch mySwitch = RCSwitch();
+boolean SwitchOff = false;
+
+// RGB Led Setup
+int redPin = 12;
+int greenPin = 11;
+int bluePin = 10;
+
+boolean MusicOff = false;
 
 
 void setup(){
@@ -45,10 +53,16 @@ void setup(){
 
   /* RCSwitch */
   mySwitch.enableTransmit(rcPin); 
+  
+  /* RGB Led */
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
 }
 
 
 void loop(){
+  
 
   /* Sharp IR */
 
@@ -67,18 +81,24 @@ void loop(){
 
   if (mfrc522.uid.uidByte[1] == 0x6F) {
 
+    
     //Serial.println("Swipe Detection");
+   setColor(255, 100, 100);
 
     if (s == SwipeDetector::SWIPE_LEFT) {
       Serial.println("Swipe: Previous");
       Remote.rewind();
-      Remote.clear();  
+      Remote.clear();
+      setColor(255, 0, 0);
+      delay(500);  
     }
 
     if (s == SwipeDetector::SWIPE_RIGHT) {
       Serial.println("Swipe: Next");
       Remote.forward();
-      Remote.clear(); 
+      Remote.clear();
+      setColor(0, 255, 0);
+      delay(500);
     }
   }  
 
@@ -105,9 +125,20 @@ void loop(){
 
   /* RCSwitch */
 
-  if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
+if (SwitchOff == false && mfrc522.uid.uidByte[1] == 0x90) {
+  
+  setColor(230, 50, 0);
+}
+  
+  else if (SwitchOff == true && mfrc522.uid.uidByte[1] == 0x90) {
+  
+  setColor(0, 0, 0); // Lights off!
+  
+} 
 
-    Serial.println("Switch");
+if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
+    
+    //Serial.println("Switch");
 
     if (distance <= 5) {  
 
@@ -130,10 +161,13 @@ void loop(){
 
       mySwitch.switchOff("11111", "00100");
       delay(10);
+      
+      SwitchOff = true;
+  
     }
 
 
-    if (distance > 10 && distance < 20) {
+    if (distance != 0 && distance > 10 && distance < 20) {
 
       Serial.println("Switch On");  
 
@@ -154,40 +188,67 @@ void loop(){
 
       mySwitch.switchOn("11111", "00100");
       delay(10);
+      
+      SwitchOff = false;
     }
   }
 
 
+
   /* USB HID */
+  
+  if (MusicOff == false && mfrc522.uid.uidByte[1] == 0x19) {
+    
+    setColor(100, 100, 100); 
+    
+  } else if (MusicOff == true && mfrc522.uid.uidByte[1] == 0x19) {
+    
+    setColor(0, 0, 0);
+  }
+    
 
   if (mfrc522.uid.uidByte[1] == 0x19 && distance !=-1) { 
 
     // Serial.println("USB HID");
 
-    if (distance > 15 && distance < 25) {
+    if (distance > 10 && distance < 20) {
       Serial.println("Volume Up");
       Remote.increase();
       Remote.clear();
+      setColor(255, 255, 255);
       delay(100);
+      
+      MusicOff = false;
     }
 
-    if (distance > 5 && distance < 10) {
+    if (distance > 5 && distance < 8) {
       Serial.println("Volume Down");
       Remote.decrease();
       Remote.clear();
+      setColor(10, 10, 10);
       delay(100);
+      
+      MusicOff = false;
     }
 
-    if (distance <= 5) {
+    if (distance <= 4) {
       Serial.println("Mute");
       Remote.mute();
       Remote.clear();
+      setColor(0, 0, 0);
       delay(1000);
+      
+      MusicOff = true;
     }
   }
 
 
   /* IRemote */
+  
+  if (mfrc522.uid.uidByte[1] == 0x45) {
+    
+    setColor(150, 40, 20);
+  }
 
   if (mfrc522.uid.uidByte[1] == 0x45 && distance != -1) {
 
@@ -213,4 +274,10 @@ void loop(){
   }
 }
 
+void setColor(int red, int green, int blue)
+{
+analogWrite(redPin, red);
+analogWrite(greenPin, green);
+analogWrite(bluePin, blue); 
+}
 
