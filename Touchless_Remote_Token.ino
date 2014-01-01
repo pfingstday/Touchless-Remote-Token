@@ -20,8 +20,8 @@
 
 // Default IR Led Pin 3 (Uno), Pin 13 (Micro)
 
-SharpIRProximitySensor sensorLeft(0);
-SharpIRProximitySensor sensorRight(1);
+SharpIRProximitySensor sensorLeft(1);
+SharpIRProximitySensor sensorRight(0);
 SwipeDetector detector;
 
 //RFID Setup
@@ -89,7 +89,9 @@ void loop(){
       Serial.println("Swipe: Previous");
       Remote.rewind();
       Remote.clear();
+      irsend.sendNEC(0xFD6897, 32);
       setColor(255, 0, 0);
+      
       delay(500);  
     }
 
@@ -98,6 +100,7 @@ void loop(){
       Remote.forward();
       Remote.clear();
       setColor(0, 255, 0);
+      irsend.sendNEC(0xFD609F, 32);
       delay(500);
     }
   }  
@@ -167,7 +170,7 @@ if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
     }
 
 
-    if (distance != 0 && distance > 10 && distance < 20) {
+    if (distance != 0 && distance > 5 && distance < 20) {
 
       Serial.println("Switch On");  
 
@@ -256,19 +259,22 @@ if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
 
     if (distance > 15 && distance < 25) {
       Serial.println(" IR Lauter");
-      irsend.sendNEC(0xA55A50AF, 32);
+      //irsend.sendNEC(0xA55A50AF, 32);
+      irsend.sendNEC(0xFDD827, 32);
       delay(40);
     }
 
     if (distance <= 10) {
       Serial.println("IR Leiser");
-      irsend.sendNEC(0xA55AD02F, 32);
+      //irsend.sendNEC(0xA55AD02F, 32);
+      irsend.sendNEC(0xFD5AA5, 32);
       delay(40);
     }
 
     if (distance <= 5) {
       Serial.println("IR Mute");
-      irsend.sendNEC(0xA55A48B7, 32);
+      //irsend.sendNEC(0xA55A48B7, 32);
+      irsend.sendNEC(0xFD9867, 32);
       delay(1000);
     }
   }
