@@ -9,20 +9,29 @@
 // IRremote Lib
 #include <IRremote.h>
 
-// Swipe Detector
+// Swipe Detector Lib
 #include "SwipeDetector.h"
 #include "ProximitySensor.h"
 
-#define rcPin 2 // RCSwitch
 
-#define RST_PIN 8   // RFID
-#define SS_PIN 7   // RFID
+// Default IR Led 
+// Pin 3 (Uno), Pin 13 (Micro)
 
-// Default IR Led Pin 3 (Uno), Pin 13 (Micro)
+// RGB Led Setup
+const int redPin = 12;
+const int greenPin = 11;
+const int bluePin = 10;
 
-SharpIRProximitySensor sensorLeft(1);
-SharpIRProximitySensor sensorRight(0);
-SwipeDetector detector;
+// RFID
+const int RST_PIN = 8;  
+const int SS_PIN = 7;
+
+// RCSwitch
+const int rcPin = 2; 
+
+boolean MusicOff = false;
+boolean SwitchOff = false;
+
 
 //RFID Setup
 MFRC522 mfrc522(SS_PIN, RST_PIN);
@@ -32,20 +41,26 @@ IRsend irsend;
 
 // RCSwitch Setup
 RCSwitch mySwitch = RCSwitch();
-boolean SwitchOff = false;
 
-// RGB Led Setup
-int redPin = 12;
-int greenPin = 11;
-int bluePin = 10;
+// Sharp IR Setup
+SharpIRProximitySensor sensorLeft(1);
+SharpIRProximitySensor sensorRight(0);
+SwipeDetector detector;
 
-boolean MusicOff = false;
+// RFID Tags Setup
+byte tag;
+
+// tag: 1 Swipe
+// tag: 2 Switch
+// tag: 3 HID
+// tag: 4 IRemote
 
 
 void setup(){
 
-  /* Sharp IR */
   Serial.begin(9600);
+  
+  /* Sharp IR */  
   SPI.begin(); 
 
   /* Init MFRC522 card */
@@ -61,8 +76,35 @@ void setup(){
 }
 
 
-void loop(){
+void readrfid(){
+
+  if ( ! mfrc522.PICC_IsNewCardPresent()) {
+    return;
+  }
   
+  if ( ! mfrc522.PICC_ReadCardSerial()) {
+    return;
+  }
+  // Now a card is selected. The UID and SAK is in mfrc522.uid.
+
+  for (byte i = 0; i < mfrc522.uid.size; i++) {
+  //  Serial.print(mfrc522.uid.uidByte[i], HEX);
+  } 
+  //  Serial.println();
+}
+
+
+void loop(){
+
+  /* RFID RC522 */
+  
+  readrfid();
+
+  if(mfrc522.uid.uidByte[1] == 0x6F){tag = 1;}
+  if(mfrc522.uid.uidByte[1] == 0x90){tag = 2;}
+  if(mfrc522.uid.uidByte[1] == 0x19){tag = 3;}
+  if(mfrc522.uid.uidByte[1] == 0x45){tag = 4;}
+
 
   /* Sharp IR */
 
@@ -71,28 +113,21 @@ void loop(){
 
   SwipeDetector::Swipe s = detector.detect(distance, distance2);
 
-  if (distance != -1 && distance2 != -1) {  // -1 = kein gültiges Signal
-    Serial.println(distance);
-    Serial.println(distance2);
-  }
-
 
   /* Swipe Detection */
 
-  if (mfrc522.uid.uidByte[1] == 0x6F) {
-
+  if (tag == 1) {
     
     //Serial.println("Swipe Detection");
+
    setColor(255, 100, 100);
 
     if (s == SwipeDetector::SWIPE_LEFT) {
       Serial.println("Swipe: Previous");
       Remote.rewind();
       Remote.clear();
-      irsend.sendNEC(0xFD6897, 32);
       setColor(255, 0, 0);
-      
-      delay(500);  
+      delay(200);  
     }
 
     if (s == SwipeDetector::SWIPE_RIGHT) {
@@ -100,79 +135,29 @@ void loop(){
       Remote.forward();
       Remote.clear();
       setColor(0, 255, 0);
-      irsend.sendNEC(0xFD609F, 32);
-      delay(500);
+      delay(200);
     }
   }  
 
 
-  /* RFID RC522 */
-
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-  // Now a card is selected. The UID and SAK is in mfrc522.uid.
-
-
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
-  //	Serial.print(mfrc522.uid.uidByte[i], HEX);
-  } 
-  //	Serial.println();
-
-
   /* RCSwitch */
 
-if (SwitchOff == false && mfrc522.uid.uidByte[1] == 0x90) {
-  
+if (SwitchOff == false && tag == 2) {
   setColor(230, 50, 0);
 }
   
-  else if (SwitchOff == true && mfrc522.uid.uidByte[1] == 0x90) {
-  
+else if (SwitchOff == true && tag == 2) {
   setColor(0, 0, 0); // Lights off!
-  
 } 
 
-if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
+if (tag == 2) {
     
-    //Serial.println("Switch");
+  //Serial.println("Switch");
 
-    if (distance <= 5) {  
-
-      Serial.println("Switch Off");  
-
-      mySwitch.switchOff("00000", "10000");
-      delay(10);
-
-      mySwitch.switchOff("00000", "01000");
-      delay(10);
-
-      mySwitch.switchOff("00000", "00100");
-      delay(10);
-
-      mySwitch.switchOff("11111", "10000");
-      delay(10);
-
-      mySwitch.switchOff("11111", "01000");
-      delay(10);
-
-      mySwitch.switchOff("11111", "00100");
-      delay(10);
-      
-      SwitchOff = true;
-  
-    }
-
-
-    if (distance != 0 && distance > 5 && distance < 20) {
+    if (s == SwipeDetector::SWIPE_LEFT || s == SwipeDetector::SWIPE_RIGHT) {
 
       Serial.println("Switch On");  
+      setColor(0, 255, 0);
 
       mySwitch.switchOn("00000", "10000");
       delay(10);
@@ -194,23 +179,47 @@ if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
       
       SwitchOff = false;
     }
-  }
+ 
+    if (distance >0 && distance <= 4) {  
 
+      Serial.println("Switch Off");  
+      setColor(255, 0, 0);
+
+      mySwitch.switchOff("00000", "10000");
+      delay(10);
+
+      mySwitch.switchOff("00000", "01000");
+      delay(10);
+
+      mySwitch.switchOff("00000", "00100");
+      delay(10);
+
+      mySwitch.switchOff("11111", "10000");
+      delay(10);
+
+      mySwitch.switchOff("11111", "01000");
+      delay(10);
+
+      mySwitch.switchOff("11111", "00100");
+      delay(10);
+      
+      SwitchOff = true;
+    }
+  }
 
 
   /* USB HID */
   
-  if (MusicOff == false && mfrc522.uid.uidByte[1] == 0x19) {
-    
+  if (MusicOff == false && tag == 3) {
     setColor(100, 100, 100); 
-    
-  } else if (MusicOff == true && mfrc522.uid.uidByte[1] == 0x19) {
-    
+  }
+
+  else if (MusicOff == true && tag == 3) {
     setColor(0, 0, 0);
   }
     
 
-  if (mfrc522.uid.uidByte[1] == 0x19 && distance !=-1) { 
+  if (tag == 3 && distance !=-1) { 
 
     // Serial.println("USB HID");
 
@@ -248,14 +257,13 @@ if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
 
   /* IRemote */
   
-  if (mfrc522.uid.uidByte[1] == 0x45) {
-    
+  if (tag == 4) {
     setColor(150, 40, 20);
   }
 
-  if (mfrc522.uid.uidByte[1] == 0x45 && distance != -1) {
+  if (tag == 4 && distance != -1) {
 
-    //    Serial.println("IR Receiver");
+    // Serial.println("IR Receiver");
 
     if (distance > 15 && distance < 25) {
       Serial.println(" IR Lauter");
@@ -280,10 +288,9 @@ if (mfrc522.uid.uidByte[1] == 0x90 && distance !=-1) {
   }
 }
 
-void setColor(int red, int green, int blue)
-{
-analogWrite(redPin, red);
-analogWrite(greenPin, green);
-analogWrite(bluePin, blue); 
+void setColor(int red, int green, int blue) {
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue); 
 }
 
