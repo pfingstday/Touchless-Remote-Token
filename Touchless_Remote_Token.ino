@@ -112,7 +112,11 @@ void loop(){
   int distance2 = sensorRight.read();
 
   SwipeDetector::Swipe s = detector.detect(distance, distance2);
-
+  
+  //if (distance != -1 && distance2 != -1) {
+  //Serial.println(distance);
+  //Serial.println(distance2);
+  // }
 
   /* Swipe Detection */
 
@@ -219,11 +223,11 @@ if (tag == 2) {
   }
     
 
-  if (tag == 3 && distance !=-1) { 
+  if (tag == 3 && distance != -1) { 
 
     // Serial.println("USB HID");
 
-    if (distance > 10 && distance < 20) {
+    if (distance >= 10 && distance <= 20) {
       Serial.println("Volume Up");
       Remote.increase();
       Remote.clear();
@@ -233,7 +237,7 @@ if (tag == 2) {
       MusicOff = false;
     }
 
-    if (distance > 5 && distance < 8) {
+    if (distance >= 5 && distance <= 10) {
       Serial.println("Volume Down");
       Remote.decrease();
       Remote.clear();
@@ -258,7 +262,7 @@ if (tag == 2) {
 
   /* IRemote */
   
-  if (tag == 4) {
+  if (tag == 4 && distance != -1) {
     setColor(150, 40, 20);
   }
 
@@ -266,24 +270,21 @@ if (tag == 2) {
 
     // Serial.println("IR Receiver");
 
-    if (distance > 15 && distance < 25) {
-      Serial.println(" IR Lauter");
-      //irsend.sendNEC(0xA55A50AF, 32);
-      irsend.sendNEC(0xFDD827, 32);
+    if (distance >= 10 && distance <= 20) {
+      Serial.println("IR Lauter");
+      irsend.sendNEC(0xA55A50AF, 32);
       delay(40);
     }
 
-    if (distance <= 10) {
+    if (distance >= 5 && distance <= 8) {
       Serial.println("IR Leiser");
-      //irsend.sendNEC(0xA55AD02F, 32);
-      irsend.sendNEC(0xFD5AA5, 32);
+      irsend.sendNEC(0xA55AD02F, 32);
       delay(40);
     }
 
-    if (distance <= 5) {
+    if (distance <= 4) {
       Serial.println("IR Mute");
-      //irsend.sendNEC(0xA55A48B7, 32);
-      irsend.sendNEC(0xFD9867, 32);
+      irsend.sendNEC(0xA55A48B7, 32);
       sensorLeft.clear();
       delay(1000);
     }
