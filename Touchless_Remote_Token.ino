@@ -248,6 +248,7 @@ if (tag == 2) {
       Remote.mute();
       Remote.clear();
       setColor(0, 0, 0);
+      sensorLeft.clear();
       delay(1000);
       
       MusicOff = true;
@@ -283,6 +284,7 @@ if (tag == 2) {
       Serial.println("IR Mute");
       //irsend.sendNEC(0xA55A48B7, 32);
       irsend.sendNEC(0xFD9867, 32);
+      sensorLeft.clear();
       delay(1000);
     }
   }
