@@ -29,10 +29,6 @@ const int SS_PIN = 7;
 // RCSwitch
 const int rcPin = 2; 
 
-boolean MusicOff = false;
-boolean SwitchOff = false;
-
-
 //RFID Setup
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
@@ -50,10 +46,8 @@ SwipeDetector detector;
 // RFID Tags Setup
 byte tag;
 
-// tag: 1 Swipe
-// tag: 2 Switch
-// tag: 3 HID
-// tag: 4 IRemote
+boolean MusicOff = false;
+boolean SwitchOff = false;
 
 
 void setup(){
@@ -100,12 +94,13 @@ void loop(){
   
   readrfid();
 
-  if(mfrc522.uid.uidByte[1] == 0x6F){tag = 1;}
-  if(mfrc522.uid.uidByte[1] == 0x90){tag = 2;}
-  if(mfrc522.uid.uidByte[1] == 0x19){tag = 3;}
-  if(mfrc522.uid.uidByte[1] == 0x45){tag = 4;}
-
-
+  if(mfrc522.uid.uidByte[1] == 0x6F){tag = 1;} // Swipe
+  if(mfrc522.uid.uidByte[1] == 0x19){tag = 2;} // HID
+  if(mfrc522.uid.uidByte[1] == 0x45){tag = 3;} // IRemote
+  if(mfrc522.uid.uidByte[1] == 0x90){tag = 4;} // RCSwitch
+  if(mfrc522.uid.uidByte[1] == 0x79){tag = 5;} // MasterSwitch
+  
+  
   /* Sharp IR */
 
   int distance = sensorLeft.read();
@@ -144,88 +139,18 @@ void loop(){
   }  
 
 
-  /* RCSwitch */
-
-if (SwitchOff == false && tag == 2) {
-  setColor(230, 50, 0);
-}
-  
-else if (SwitchOff == true && tag == 2) {
-  setColor(0, 0, 0); // Lights off!
-} 
-
-if (tag == 2) {
-    
-  //Serial.println("Switch");
-
-    if (s == SwipeDetector::SWIPE_LEFT || s == SwipeDetector::SWIPE_RIGHT) {
-
-      Serial.println("Switch On");  
-      setColor(0, 255, 0);
-
-      mySwitch.switchOn("00000", "10000");
-      delay(10);
-
-      mySwitch.switchOn("00000", "01000");
-      delay(10);
-
-      mySwitch.switchOn("00000", "00100");
-      delay(10);
-
-      mySwitch.switchOn("11111", "10000");
-      delay(10);
-
-      mySwitch.switchOn("11111", "01000");
-      delay(10);
-
-      mySwitch.switchOn("11111", "00100");
-      delay(10);
-      
-      SwitchOff = false;
-    }
- 
-    if (distance >0 && distance <= 4) {  
-
-      Serial.println("Switch Off");  
-      setColor(255, 0, 0);
-
-      mySwitch.switchOff("00000", "10000");
-      delay(10);
-
-      mySwitch.switchOff("00000", "01000");
-      delay(10);
-
-      mySwitch.switchOff("00000", "00100");
-      delay(10);
-
-      mySwitch.switchOff("11111", "10000");
-      delay(10);
-
-      mySwitch.switchOff("11111", "01000");
-      delay(10);
-
-      mySwitch.switchOff("11111", "00100");
-      delay(10);
-      
-      SwitchOff = true;
-    }
-  }
-
-
   /* USB HID */
   
-  if (MusicOff == false && tag == 3) {
+  if (MusicOff == false && tag == 2) {
     setColor(100, 100, 100); 
   }
 
-  else if (MusicOff == true && tag == 3) {
+  else if (MusicOff == true && tag == 2) {
     setColor(0, 0, 0);
   }
     
 
-  if (tag == 3 && distance != -1) { 
-
-    // Serial.println("USB HID");
+  if (tag == 2 && distance != -1) { 
 
     if (distance >= 10 && distance <= 20) {
       Serial.println("Volume Up");
@@ -262,11 +187,11 @@ if (tag == 2) {
 
   /* IRemote */
   
-  if (tag == 4 && distance != -1) {
+  if (tag == 3) {
     setColor(150, 40, 20);
   }
 
-  if (tag == 4 && distance != -1) {
+  if (tag == 3 && distance != -1) {
 
     // Serial.println("IR Receiver");
 
@@ -289,11 +214,115 @@ if (tag == 2) {
       delay(1000);
     }
   }
+
+
+  /* RCSwitch */
+
+  if (SwitchOff == false && tag == 4) {
+    setColor(230, 50, 0);
+  }
+    
+  else if (SwitchOff == true && tag == 4) {
+    setColor(0, 0, 0); // Lights off!
+  } 
+
+  if (tag == 4) {
+    
+    //Serial.println("Switch");
+
+    if (s == SwipeDetector::SWIPE_LEFT || s == SwipeDetector::SWIPE_RIGHT) {
+
+      Serial.println("Switch On");  
+      setColor(0, 255, 0);
+
+      mySwitch.switchOn("11111", "10000");
+      delay(10);
+      mySwitch.switchOn("11111", "01000");
+      delay(10);
+      mySwitch.switchOn("11111", "00100");
+      delay(10);
+      
+      SwitchOff = false;
+    }
+ 
+    if (distance >0 && distance <= 4) {  
+
+      Serial.println("Switch Off");  
+      setColor(255, 0, 0);
+
+      mySwitch.switchOff("11111", "10000");
+      delay(10);
+      mySwitch.switchOff("11111", "01000");
+      delay(10);
+      mySwitch.switchOff("11111", "00100");
+      delay(10);
+      
+      SwitchOff = true;
+    }
+  }
+
+
+  /* MasterSwitch */
+
+  if (SwitchOff == false && tag == 5) {
+    setColor(0, 0, 255);
+  }
+  
+  else if (SwitchOff == true && tag == 5) {
+    setColor(0, 0, 0); // Lights off!
+  } 
+
+  if (tag == 5) {
+    
+    //Serial.println("Switch");
+
+    if (s == SwipeDetector::SWIPE_LEFT || s == SwipeDetector::SWIPE_RIGHT) {
+
+      Serial.println("Switch On");  
+      setColor(0, 255, 0);
+
+      mySwitch.switchOn("00000", "10000");
+      delay(10);
+      mySwitch.switchOn("00000", "01000");
+      delay(10);
+      mySwitch.switchOn("00000", "00100");
+      delay(10);
+      mySwitch.switchOn("11111", "10000");
+      delay(10);
+      mySwitch.switchOn("11111", "01000");
+      delay(10);
+      mySwitch.switchOn("11111", "00100");
+      delay(10);
+      
+      SwitchOff = false;
+    }
+ 
+    if (distance >0 && distance <= 4) {  
+
+      Serial.println("Switch Off");  
+      setColor(255, 0, 0);
+
+      mySwitch.switchOff("00000", "10000");
+      delay(10);
+      mySwitch.switchOff("00000", "01000");
+      delay(10);
+      mySwitch.switchOff("00000", "00100");
+      delay(10);
+      mySwitch.switchOff("11111", "10000");
+      delay(10);
+      mySwitch.switchOff("11111", "01000");
+      delay(10);
+      mySwitch.switchOff("11111", "00100");
+      delay(10);
+      
+      SwitchOff = true;
+    }
+  }
 }
+  
 
 void setColor(int red, int green, int blue) {
   analogWrite(redPin, red);
   analogWrite(greenPin, green);
   analogWrite(bluePin, blue); 
 }
-
