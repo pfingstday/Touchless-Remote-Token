@@ -1,3 +1,5 @@
+//Include Metro Lib
+#include <Metro.h> 
 
 // RFID Lib
 #include <SPI.h>
@@ -48,6 +50,9 @@ byte tag;
 
 boolean MusicOff = false;
 boolean SwitchOff = false;
+
+boolean delayOn = true;
+Metro delaySensor = Metro(1000);
 
 
 void setup(){
@@ -108,35 +113,113 @@ void loop(){
 
   SwipeDetector::Swipe s = detector.detect(distance, distance2);
   
-  //if (distance != -1 && distance2 != -1) {
-  //Serial.println(distance);
-  //Serial.println(distance2);
-  // }
+//  if (distance != -1 && distance2 != -1) {
+//  Serial.println(distance);
+//  Serial.println(distance2);
+//   }
+   
+   
+ /* Sensor Delay */  
+   
+   if (delaySensor.check() == 1) {
+     
+   if (delayOn == true && distance != -1 && distance < 28 && distance2 < 28){
+   
+    delayOn = false;
+   Serial.println("delayOn = false");
+   
+   }else{
+   delayOn = true;
+   Serial.println("delayOn = true");
+  }
+ }
 
-  /* Swipe Detection */
+
+/* Tag 1: Swipe & HID Volume */ 
+    
+  
+    if (MusicOff == false && tag == 1) {
+    setColor(255, 100, 100);
+  }
+
+  else if (MusicOff == true && tag == 1) {
+    setColor(0, 0, 0);
+  }
+
+
+ /* Swipe Detection */
 
   if (tag == 1) {
     
-    //Serial.println("Swipe Detection");
-
-   setColor(255, 100, 100);
-
-    if (s == SwipeDetector::SWIPE_LEFT) {
+   if (MusicOff == false && s == SwipeDetector::SWIPE_LEFT) {
       Serial.println("Swipe: Previous");
       Remote.rewind();
       Remote.clear();
       setColor(255, 0, 0);
-      delay(200);  
+      delay(300);
     }
 
-    if (s == SwipeDetector::SWIPE_RIGHT) {
+    if (MusicOff == false && s == SwipeDetector::SWIPE_RIGHT) {
       Serial.println("Swipe: Next");
       Remote.forward();
       Remote.clear();
       setColor(0, 255, 0);
-      delay(200);
+      delay(300);
     }
-  }  
+    
+    if (MusicOff == true && s == SwipeDetector::SWIPE_LEFT || MusicOff == true && s == SwipeDetector::SWIPE_RIGHT  ) {
+       Serial.println("Play");
+      Remote.mute();
+      Remote.clear();
+      sensorRight.clear();
+      delaySensor.reset();
+      MusicOff = false;
+    }
+   
+   
+  /* HID Volume Control */  
+   
+  if(delayOn == false){   
+     
+   if (distance2 != -1 && distance2 >= 12 && distance2 <= 25) {
+      Serial.println("Volume Up");
+      Remote.increase();
+      Remote.clear();
+      sensorRight.clear();
+      delaySensor.reset();
+      setColor(255, 100, 100);
+      delay(100);
+      
+      MusicOff = false;
+    }
+
+    if (distance2 != -1 && distance2 >= 5 && distance2 <= 8) {
+      Serial.println("Volume Down");
+      Remote.decrease();
+      Remote.clear();
+      sensorRight.clear();
+      delaySensor.reset();
+      setColor(255, 100, 100);
+      delay(100);
+      
+      MusicOff = false;
+    }
+
+    if (distance2 != -1 && distance2 <= 4) {
+      Serial.println("Mute");
+      Remote.mute();
+      Remote.clear();
+      sensorRight.clear();
+      delaySensor.reset();
+      setColor(0, 0, 0);
+      MusicOff = true;
+      delay(1000);
+    }
+     
+    
+   }
+   
+  } 
 
 
   /* USB HID */
@@ -162,7 +245,7 @@ void loop(){
       MusicOff = false;
     }
 
-    if (distance >= 5 && distance <= 10) {
+    if (distance >= 5 && distance <= 8) {
       Serial.println("Volume Down");
       Remote.decrease();
       Remote.clear();
