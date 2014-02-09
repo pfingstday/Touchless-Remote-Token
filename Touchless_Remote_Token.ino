@@ -19,32 +19,34 @@
 // Pin 3 (Uno), Pin 13 (Micro)
 
 // RGB Led Setup
-const int redPin = 12;
+const int redPin = 5;
 const int greenPin = 11;
 const int bluePin = 10;
 
-// Swipe & HID
+// Color Swipe & HID
 int i1 = 255; 
-int redVal1 = 0;
-int greenVal1 = 255;
+int redVal1 = 255;
+int greenVal1 = 0;
 int blueVal1 = 255;
 
-int i2 = 125; 
-int redVal2 = 255;
-int greenVal2 = 0;
-int blueVal2 = 0;
+int i2 = 255; 
+int redVal2 = 0;
+int greenVal2 = 255;
+int blueVal2 = 255;
 
 //int redVal3 = 0;
 //int greenVal3 = 120;
 //int blueVal3 = 120;
-//
-//int redVal4 = 0;
-//int greenVal4 = 120;
-//int blueVal4 = 120;
-//
-//int redVal5 = 0;
-//int greenVal5 = 120;
-//int blueVal5 = 120;
+
+// Color Switch
+int redVal4 = 180;
+int greenVal4 = 100;
+int blueVal4 = 0;
+
+// Color Master Switch
+int redVal5 = 255;
+int greenVal5 = 255;
+int blueVal5 = 30;
 
 // RFID
 const int RST_PIN = 8;  
@@ -187,17 +189,13 @@ void loop(){
 
  /* Tag 1: HID Volume & Swipe  */ 
   
-//  if (MusicOff == false && tag == 1) {
-//     setColor(255, 100, 100);    
-//  }
-//
-//  else if (MusicOff == true && tag == 1) {
-//    setColor(0, 0, 0);
-//  }
 
-  if (tag == 1 && resetColor == true) {
+  if (tag == 1 && resetColor == true && MusicOff == false) {
     setColorTag1(redVal1,greenVal1,blueVal1);
-  }    
+  } 
+   else if (tag == 1 && MusicOff == true) {
+   setColor(16, 0, 16);
+ }  
 
  // Skip Tracks
 
@@ -222,6 +220,7 @@ void loop(){
         setColor(0, 255, 0);
         delay(300);
         setColorTag1(redVal1,greenVal1,blueVal1);
+        delaySensor.reset();
       }
     }
        
@@ -229,7 +228,7 @@ void loop(){
      
     if (delayOn == false && resetColor == false) {   
        
-     if (distance2 != -1 && distance2 >= 12 && distance2 <= 25) {
+     if (distance2 != -1 && distance2 >= 9 && distance2 <= 30) {
         Serial.println("Volume Up");
         Remote.increase();
         Remote.clear();
@@ -238,13 +237,13 @@ void loop(){
         setColorTag1(redVal1,greenVal1,blueVal1);
     
         i1 += 16;
-        redVal1  = 0;      
-        greenVal1 += 16; 
+        redVal1  += 16;      
+        greenVal1 = 0; 
         blueVal1  += 16;
     
         if (i1 >= 255){
-          redVal1  = 0;
-          greenVal1 = 255;
+          redVal1  = 255;
+          greenVal1 = 0;
           blueVal1  = 255;
           i1 = 255;
         }
@@ -255,7 +254,7 @@ void loop(){
         MusicOff = false;
       }
 
-      if (distance2 != -1 && distance2 >= 5 && distance2 <= 8) {
+      if (distance2 != -1 && distance2 >= 4 && distance2 <= 7) {
         Serial.println("Volume Down");
         Remote.decrease();
         Remote.clear();
@@ -264,13 +263,13 @@ void loop(){
         setColorTag1(redVal1,greenVal1,blueVal1);
     
         i1 -= 16;
-        redVal1  = 0;
-        greenVal1 -= 16; 
+        redVal1  -= 16;
+        greenVal1 = 0; 
         blueVal1  -= 16;
     
         if (i1 <= 16){
-          redVal1  = 0;
-          greenVal1 = 16;
+          redVal1  = 16;
+          greenVal1 = 0;
           blueVal1  = 16;
           i1 = 16;
         }
@@ -284,16 +283,17 @@ void loop(){
 
     // Mute & Play     
    
-    if (distance2 != -1 && distance2 <= 4) {
+    if (distance2 != -1 && distance2 <= 3 && delayOn == false) {
       Serial.println("Mute");
       Remote.mute();
       Remote.clear();
       sensorRight.clear();
-      //setColor(0, 0, 0);
+      setColor(255, 0, 0);
       MusicOff = true;
       MuteOn = true;
       delay(900);
-      delaySensor.reset();  
+      delaySensor.reset();
+        
     }
 
     if (MuteOn == true && delayOn == true) {
@@ -303,7 +303,7 @@ void loop(){
         Remote.mute();
         Remote.clear();
         sensorRight.clear();
-        //setColor(0, 0, 0);
+        setColorTag1(redVal1,greenVal1,blueVal1);
         MusicOff = false;
         MuteOn = false;
       }
@@ -311,28 +311,32 @@ void loop(){
   }
 
 
-
   /* Tag 2: IRRemote & Swipe */
   
-  if (tag == 2 && resetColor == true) {
-    setColorTag2(redVal2,greenVal2,blueVal2);
-  }  
+  if (tag == 2 && resetColor == true && MusicOff == false) {
+    setColorTag1(redVal2,greenVal2,blueVal2);
+  } 
+   else if (tag == 2 && MusicOff == true) {
+   setColor(0, 16, 16);
+ }   
 
   if (tag == 2 && resetColor == false) {
 
    //Serial.println("IR Receiver");
 
-   if (distance2 >= 8 && distance2 <= 25) {
-    //Serial.println("IR Lauter");
+   if (distance2 >= 9 && distance2 <= 30) {
+    Serial.println("IR Lauter");
     irsend.sendNEC(0xA55A50AF, 32);
 
     setColorTag2(redVal2,greenVal2,blueVal2);
 
-    i2 += 10;      
+    i2 += 10;
+    redVal2  = 0;      
     greenVal2 += 10; 
     blueVal2  += 10;
 
     if (i2 >= 255){
+      redVal2  = 0;
       greenVal2 = 255;
       blueVal2  = 255;
       i2 = 255;
@@ -342,17 +346,19 @@ void loop(){
    }
 
 
-   if (distance2 >= 5 && distance2 <= 8) {
-    //Serial.println("IR Leiser");
+   if (distance2 >= 4 && distance2 <= 7) {
+    Serial.println("IR Leiser");
     irsend.sendNEC(0xA55AD02F, 32);
     
     setColorTag2(redVal2,greenVal2,blueVal2); 
 
     i2 -= 10;
+    redVal2  = 0;
     greenVal2 -= 10; 
     blueVal2  -= 10;
 
     if (i2 <= 10){
+      redVal2  = 0;
       greenVal2 = 10;
       blueVal2  = 10;
       i2 = 10;
@@ -360,25 +366,25 @@ void loop(){
     delay(100);
     delayColor.reset();
    }
-}
 
-   if (distance2 <= 4 && distance2 != -1) {
+
+   if (distance2 <= 3 && distance2 != -1) {
      Serial.println("IR Mute");
      irsend.sendNEC(0xA55A48B7, 32);
-     sensorLeft.clear();
+     sensorRight.clear();
      delay(1000);
    }
- 
+  } 
   
 
   /* Tag 4: RCSwitch */
 
   if (SwitchOff == false && tag == 4) {
-    //setColor(200, 50, 0);
+    setColorTag4(redVal4,greenVal4,blueVal4);
   }
     
   else if (SwitchOff == true && tag == 4) {
-    //setColor(0, 0, 0); // Lights off!
+    setColor(0, 0, 0); // Lights off!
   } 
 
   if (tag == 4) {
@@ -388,7 +394,7 @@ void loop(){
     if (s == SwipeDetector::SWIPE_LEFT || s == SwipeDetector::SWIPE_RIGHT) {
 
       Serial.println("Switch On");  
-      //setColor(0, 255, 0);
+      setColor(0, 255, 0);
       
       mySwitch.switchOn("00000", "10000");
       delay(10);
@@ -408,7 +414,7 @@ void loop(){
     if (distance >0 && distance <= 4) {  
 
       Serial.println("Switch Off");  
-      //setColor(255, 0, 0);
+      setColor(255, 0, 0);
       
       mySwitch.switchOff("00000", "10000");
       delay(10);
@@ -431,11 +437,11 @@ void loop(){
   /* Tag 5: MasterSwitch */
 
   if (SwitchOff == false && tag == 5) {
-    //setColor(255, 255, 20);
+    setColorTag5(redVal5,greenVal5,blueVal5);
   }
   
   else if (SwitchOff == true && tag == 5) {
-    //setColor(0, 0, 0); // Lights off!
+    setColor(0, 0, 0); // Lights off!
   } 
 
   if (tag == 5) {
@@ -444,8 +450,8 @@ void loop(){
 
     if (s == SwipeDetector::SWIPE_LEFT || s == SwipeDetector::SWIPE_RIGHT) {
 
-      Serial.println("Switch On");  
-      //setColor(0, 255, 0);
+      Serial.println("Master Switch On");  
+      setColor(0, 255, 0);
 
       mySwitch.switchOn("00000", "10000");
       delay(10);
@@ -465,8 +471,8 @@ void loop(){
  
     if (distance >0 && distance <= 4) {  
 
-      Serial.println("Switch Off");  
-      //setColor(255, 0, 0);
+      Serial.println("Master Switch Off");  
+      setColor(255, 0, 0);
 
       mySwitch.switchOff("00000", "10000");
       delay(10);
@@ -503,6 +509,24 @@ void setColorTag2(int redVal2, int greenVal2, int blueVal2) {
   analogWrite(redPin, redVal2);
   analogWrite(greenPin, greenVal2);
   analogWrite(bluePin, blueVal2); 
+}
+
+void setColorTag3(int redVal3, int greenVal3, int blueVal3) {
+  analogWrite(redPin, redVal3);
+  analogWrite(greenPin, greenVal3);
+  analogWrite(bluePin, blueVal3); 
+}
+
+void setColorTag4(int redVal4, int greenVal4, int blueVal4) {
+  analogWrite(redPin, redVal4);
+  analogWrite(greenPin, greenVal4);
+  analogWrite(bluePin, blueVal4); 
+}
+
+void setColorTag5(int redVal5, int greenVal5, int blueVal5) {
+  analogWrite(redPin, redVal5);
+  analogWrite(greenPin, greenVal5);
+  analogWrite(bluePin, blueVal5); 
 }
 
 //int getTiltPosition(){
